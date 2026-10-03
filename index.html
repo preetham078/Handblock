@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101716">
+    <meta name="description" content="Build a world with blocks and hand gestures in HandBlock.">
+    <title>HandBlock | Creative World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+        }
+      }
+    </script>
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <canvas id="world-canvas" aria-label="Interactive 3D building world"></canvas>
+      <div class="world-shade" aria-hidden="true"></div>
+
+      <header class="top-hud">
+        <a class="brand" href="#" aria-label="HandBlock creative world">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="brand-name">HAND<span>BLOCK</span></span>
+        </a>
+        <div class="world-name"><span class="world-pulse"></span> CREATIVE WORLD <span class="world-divider">/</span> 01</div>
+        <div class="top-stats">
+          <div class="top-status" id="camera-status-pill" data-state="idle">
+            <span class="status-dot"></span><span id="camera-status">Camera off</span>
+          </div>
+          <span class="top-divider"></span>
+          <span class="fps-label">FPS <b id="fps-value">--</b></span>
+        </div>
+      </header>
+
+      <section class="camera-dock" aria-label="Hand tracking camera">
+        <div class="camera-heading"><span>HAND TRACKING</span><span class="camera-live" id="camera-live">STANDBY</span></div>
+        <div class="camera-view" id="camera-view">
+          <video id="camera-video" autoplay playsinline muted aria-label="Mirrored hand tracking camera"></video>
+          <canvas id="hand-canvas" aria-label="Detected hand landmarks"></canvas>
+          <div class="camera-placeholder" id="camera-placeholder"><span class="camera-glyph" aria-hidden="true">⌁</span><span>CAMERA OFF</span></div>
+          <span class="camera-reticle reticle-a" aria-hidden="true"></span>
+          <span class="camera-reticle reticle-b" aria-hidden="true"></span>
+        </div>
+        <div class="camera-actions">
+          <span class="camera-hands"><i></i><b id="hand-count">0</b> HANDS</span>
+          <button class="cam-button" id="start-camera" type="button" aria-label="Start camera" title="Start camera">START</button>
+          <button class="cam-button stop-camera" id="stop-camera" type="button" aria-label="Stop camera" title="Stop camera" disabled>STOP</button>
+        </div>
+        <p id="camera-note" class="camera-note">Camera frames stay on this device.</p>
+      </section>
+
+      <div class="world-readout" aria-live="polite">
+        <div class="readout-item"><span class="readout-key">MODE</span><strong id="mode-readout">BUILD</strong></div>
+        <span class="readout-separator"></span>
+        <div class="readout-item"><span class="readout-key">GESTURE</span><strong id="gesture-readout">MOUSE</strong></div>
+        <span class="readout-separator readout-wide"></span>
+        <div class="readout-item readout-wide"><span class="readout-key">BLOCKS</span><strong id="block-count">0</strong></div>
+        <div class="selected-readout"><span class="selected-swatch" id="selected-swatch"></span><span id="selected-block">BASIC BLOCK</span></div>
+      </div>
+
+      <div class="tool-dock">
+        <div class="dock-label">MATERIAL <span>SELECT</span></div>
+        <div class="material-tools" role="group" aria-label="Block material">
+          <button class="material-button is-active" type="button" data-block-type="basic" aria-pressed="true" title="Basic block"><span class="material-swatch swatch-basic">▦</span><span>Basic</span></button>
+          <button class="material-button" type="button" data-block-type="wood" aria-pressed="false" title="Wood"><span class="material-swatch swatch-wood">▦</span><span>Wood</span></button>
+          <button class="material-button" type="button" data-block-type="glass" aria-pressed="false" title="Glass"><span class="material-swatch swatch-glass">▦</span><span>Glass</span></button>
+          <button class="material-button" type="button" data-block-type="grass" aria-pressed="false" title="Grass"><span class="material-swatch swatch-grass">▦</span><span>Grass</span></button>
+          <button class="material-button" type="button" data-block-type="stone" aria-pressed="false" title="Stone"><span class="material-swatch swatch-stone">▦</span><span>Stone</span></button>
+        </div>
+        <span class="dock-divider"></span>
+        <div class="mode-tools" role="group" aria-label="Build mode">
+          <button class="mode-button is-active" data-mode="build" type="button" aria-pressed="true"><span class="mode-icon build-icon">＋</span><span>BUILD</span></button>
+          <button class="mode-button" data-mode="edit" type="button" aria-pressed="false"><span class="mode-icon edit-icon">↗</span><span>EDIT</span></button>
+          <button class="mode-button" data-mode="delete" type="button" aria-pressed="false"><span class="mode-icon delete-icon">×</span><span>DELETE</span></button>
+        </div>
+      </div>
+
+      <nav class="action-dock" aria-label="World actions">
+        <button class="action-button" id="undo-button" type="button" title="Undo (Ctrl/Cmd+Z)" aria-label="Undo" disabled><span>↶</span></button>
+        <button class="action-button" id="redo-button" type="button" title="Redo (Ctrl/Cmd+Shift+Z)" aria-label="Redo" disabled><span>↷</span></button>
+        <span class="action-divider"></span>
+        <button class="action-button text-action" id="save-button" type="button" title="Save build as JSON"><span>↓</span><b>SAVE</b></button>
+        <button class="action-button text-action" id="load-button" type="button" title="Load a saved build"><span>↑</span><b>LOAD</b></button>
+        <span class="action-divider"></span>
+        <button class="action-button clear-action" id="clear-world" type="button" title="Clear world"><span>⌫</span><b>CLEAR</b></button>
+        <input id="load-file" type="file" accept="application/json,.json" hidden>
+      </nav>
+
+      <div class="hand-tip" id="hand-tip"><span class="tip-cursor"></span><span id="tip-text">MOVE TO AIM</span></div>
+      <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    </main>
+  </body>
+</html>
